@@ -305,9 +305,9 @@ void writeValue(ORange,T)(ORange orange, string name, T value) @trusted
 			}
 			orange.formattedWrite("%s", it);
 		}
-		orange.formattedWrite("\"");
+		orange.formattedWrite("\"\n");
 	} else {
-		orange.formattedWrite("%s=\"%s\"\n", name, value);
+		orange.formattedWrite("%s=\"%s\"\n\n", name, value);
 	}
 }
 
@@ -336,9 +336,10 @@ void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted
 		}
 		oRange.put('"');
 		oRange.put('\n');
+		oRange.put('\n');
 	} else {
 		for(size_t i = 0; i < value.length; ++i) {
-			oRange.formattedWrite("[%s]\n", name);
+			oRange.formattedWrite("[%s]\n\n", name);
 			writeINIFileImpl(value[i], oRange, false);
 		}
 	}
@@ -362,7 +363,7 @@ void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
 	}
 
 	if(section) {
-		oRange.formattedWrite("[%s]\n", getTypeName!T);
+		oRange.formattedWrite("[%s]\n\n", getTypeName!T);
 	}
 
 	foreach(it; __traits(allMembers, T)) {
