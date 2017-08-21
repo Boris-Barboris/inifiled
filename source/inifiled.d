@@ -39,7 +39,8 @@ string getINI(T, string mem)() @trusted {
 
 string getTypeName(T)() @trusted {
 	import std.traits : fullyQualifiedName;
-	return fullyQualifiedName!T;
+	//return fullyQualifiedName!T; - too verbose for config
+	return T.stringof;
 }
 
 string buildStructParser(T)() {
@@ -50,7 +51,7 @@ string buildStructParser(T)() {
 			isBasicType!(typeof(__traits(getMember, T, it))) ||
 			isSomeString!(typeof(__traits(getMember, T, it))))
 		) {
-			ret ~= 
+			ret ~=
 				"case \"%s\": t.%s = to!typeof(t.%s)(it); break; %s"
 				.format(it, it, it, "\n");
 		}
@@ -178,9 +179,9 @@ string buildSectionParse(T)() @safe {
 	string[] ret;
 
 	foreach(it; __traits(allMembers, T)) {
-		if(hasUDA!(__traits(getMember, T, it), INI) 
-			&& !isBasicType!(typeof(__traits(getMember, T, it))) 
-			&& !isSomeString!(typeof(__traits(getMember, T, it))) 
+		if(hasUDA!(__traits(getMember, T, it), INI)
+			&& !isBasicType!(typeof(__traits(getMember, T, it)))
+			&& !isSomeString!(typeof(__traits(getMember, T, it)))
 			&& !isArray!(typeof(__traits(getMember, T, it))))
 		{
 			ret ~= ("case \"%s\": { line = readINIFileImpl" ~
@@ -206,13 +207,13 @@ string buildValueParse(T)() @safe {
 	string ret = "switch(getKey(line)) { // " ~ fullyQualifiedName!T ~ "\n";
 
 	foreach(it; __traits(allMembers, T)) {
-		if(hasUDA!(__traits(getMember, T, it), INI) && (isBasicType!(typeof(__traits(getMember, T, it))) 
+		if(hasUDA!(__traits(getMember, T, it), INI) && (isBasicType!(typeof(__traits(getMember, T, it)))
 			|| isSomeString!(typeof(__traits(getMember, T, it)))))
 		{
 			ret ~= ("case \"%s\": { t.%s = to!(typeof(t.%s))("
 				~ "getValue(line)); break; }\n").format(it, it, it);
-		} else if(hasUDA!(__traits(getMember, T, it), INI) 
-				&& isArray!(typeof(__traits(getMember, T, it)))) 
+		} else if(hasUDA!(__traits(getMember, T, it), INI)
+				&& isArray!(typeof(__traits(getMember, T, it))))
 		{
 			ret ~= ("case \"%s\": { t.%s = to!(typeof(t.%s))("
 				~ "getValueArray(line).split(',')); break; }\n").format(it, it, it);
@@ -223,7 +224,7 @@ string buildValueParse(T)() @safe {
 }
 
 string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
-		if(isInputRange!IRange) 
+		if(isInputRange!IRange)
 {
 	import std.conv : to;
 	import std.string : split;
@@ -245,7 +246,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 			continue;
 		}
 		debug {
-			writefln("%*s%d %s %s %b", deaph, "", __LINE__, line, fullyQualifiedName!T, 
+			writefln("%*s%d %s %s %b", deaph, "", __LINE__, line, fullyQualifiedName!T,
 				isSection(line));
 		}
 
@@ -253,18 +254,18 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 			debug {
 				//pragma(msg, buildSectionParse!(T));
 				writefln("%*s%d %s", deaph, "", __LINE__, getSection(line));
-				writefln("%*s%d %x", deaph, "", __LINE__, 
+				writefln("%*s%d %x", deaph, "", __LINE__,
 					cast(void*)&input);
 			}
-			
+
 			mixin(buildSectionParse!(T));
 		} else if(isKeyValue(line)) {
 			debug {
 				//pragma(msg, buildValueParse!(T));
-				writefln("%*s%d %s %s", deaph, "", __LINE__, getKey(line), 
+				writefln("%*s%d %s %s", deaph, "", __LINE__, getKey(line),
 					getValue(line));
 			}
-			
+
 			mixin(buildValueParse!(T));
 		}
 	}
@@ -272,7 +273,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 	return line;
 }
 
-void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted 
+void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted
 	if(isOutputRange!(ORange, ElementType!IRange) && isInputRange!IRange)
 {
 	size_t idx = 0;
@@ -291,7 +292,7 @@ void writeComment(ORange,IRange)(ORange orange, IRange irange) @trusted
 	orange.put('\n');
 }
 
-void writeValue(ORange,T)(ORange orange, string name, T value) @trusted 
+void writeValue(ORange,T)(ORange orange, string name, T value) @trusted
 	if(isOutputRange!(ORange, string))
 {
 	import std.traits : isArray, isSomeString;
@@ -301,7 +302,7 @@ void writeValue(ORange,T)(ORange orange, string name, T value) @trusted
 		foreach(idx, it; value) {
 			if(idx != 0) {
 				orange.put(',');
-			} 
+			}
 			orange.formattedWrite("%s", it);
 		}
 		orange.formattedWrite("\"");
@@ -320,7 +321,7 @@ string removeFromLastPoint(string input) @safe {
 	}
 }
 
-void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted 
+void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted
 	if(isOutputRange!(ORange, string))
 {
 	import std.traits : isBasicType, isSomeString;
@@ -330,7 +331,7 @@ void writeValues(ORange,T)(ORange oRange, string name, T value) @trusted
 		foreach(idx, it; value) {
 			if(idx != 0) {
 				oRange.put(',');
-			} 
+			}
 			oRange.formattedWrite("%s", it);
 		}
 		oRange.put('"');
@@ -350,8 +351,8 @@ void writeINIFile(T)(ref T t, string filename) @trusted {
 	writeINIFileImpl(t, oRange, true);
 }
 
-void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section) 
-		@trusted 
+void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
+		@trusted
 {
 	import std.traits : getUDAs, hasUDA, Unqual, isArray, isBasicType,
 		   isSomeString;
@@ -367,13 +368,13 @@ void writeINIFileImpl(T,ORange)(ref T t, ORange oRange, bool section)
 	foreach(it; __traits(allMembers, T)) {
 		if(hasUDA!(__traits(getMember, T, it), INI)) {
 			static if(isBasicType!(typeof(__traits(getMember, T, it))) ||
-				isSomeString!(typeof(__traits(getMember, T, it)))) 
+				isSomeString!(typeof(__traits(getMember, T, it))))
 			{
 				writeComment(oRange, getINI!(T,it));
 				writeValue(oRange, it, __traits(getMember, t, it));
 			} else static if(isArray!(typeof(__traits(getMember, T, it)))) {
 				writeComment(oRange, getINI!(T,it));
-				writeValues(oRange, getTypeName!T ~ "." ~ it, 
+				writeValues(oRange, getTypeName!T ~ "." ~ it,
 					__traits(getMember, t, it));
 			//} else static if(isINI!(typeof(__traits(getMember, t, it)))) {
 			} else static if(hasUDA!(__traits(getMember, t, it),INI))
@@ -438,7 +439,7 @@ struct Dog {
 struct Person {
 	@INI("The firstname of the Person")
 	string firstname;
-	
+
 	@INI("The lastname of the Person")
 	string lastname;
 
@@ -529,19 +530,19 @@ unittest {
 		writefln("Spose equal %b", p2.spose == p3.spose);
 		writefln("Dog equal %b", p2.dog == p3.dog);
 		assert(false);
-	}	
+	}
 	if(p != p3) {
 		writefln("\n%s\n%s", p, p3);
 		writefln("Spose equal %b", p.spose == p3.spose);
 		writefln("Dog equal %b", p.dog == p3.dog);
 		assert(false);
-	}	
+	}
 	if(p != p2) {
 		writefln("\n%s\n%s", p, p2);
 		writefln("Spose equal %b", p.spose == p2.spose);
 		writefln("Dog equal %b", p.dog == p2.dog);
 		assert(false);
-	}	
+	}
 }
 
 version(unittest) {
