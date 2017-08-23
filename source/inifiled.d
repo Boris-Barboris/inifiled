@@ -186,7 +186,7 @@ string buildSectionParse(T)() @safe {
 		{
 			ret ~= ("case \"%s\": { line = readINIFileImpl" ~
 					"(t.%s, input, deaph+1); } ").
-				format(fullyQualifiedName!(typeof(__traits(getMember, T, it))),
+				format(typeof(__traits(getMember, T, it)).stringof,
 					it
 				);
 		}
@@ -194,7 +194,7 @@ string buildSectionParse(T)() @safe {
 
 	// Avoid DMD switch fallthrough warnings
 	if (ret.length) {
-		return "switch(getSection(line)) { // " ~ fullyQualifiedName!T ~ "\n" ~
+		return "switch(getSection(line)) { // " ~ T.stringof ~ "\n" ~
 			ret.join("goto case; \n") ~ "goto default;\n default: return line;\n}\n";
 	} else {
 		return "return line;";
@@ -204,7 +204,7 @@ string buildSectionParse(T)() @safe {
 string buildValueParse(T)() @safe {
 	import std.traits : hasUDA, fullyQualifiedName, isArray, isBasicType, isSomeString;
 	import std.format : format;
-	string ret = "switch(getKey(line)) { // " ~ fullyQualifiedName!T ~ "\n";
+	string ret = "switch(getKey(line)) { // " ~ T.stringof ~ "\n";
 
 	foreach(it; __traits(allMembers, T)) {
 		if(hasUDA!(__traits(getMember, T, it), INI) && (isBasicType!(typeof(__traits(getMember, T, it)))
@@ -230,6 +230,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 	import std.string : split;
 	import std.algorithm.searching : startsWith;
 	import std.traits : fullyQualifiedName;
+	import std.regex: matchFirst, ctRegex;
 	debug {
 		import std.stdio : writefln;
 	}
@@ -237,12 +238,13 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 		writefln("%*s%d %s %x", deaph, "", __LINE__, fullyQualifiedName!(typeof(t)),
 			cast(void*)&input);
 	}
+	static auto empty_regex = ctRegex!(`^\s*$`);
 	string line;
 	while(!input.empty()) {
 		line = input.front().idup;
 		input.popFront();
 
-		if(line.startsWith(";")) {
+		if(line.startsWith(";") || matchFirst(line, empty_regex)) {
 			continue;
 		}
 		debug {
@@ -250,7 +252,7 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 				isSection(line));
 		}
 
-		if(isSection(line) && getSection(line) != fullyQualifiedName!T) {
+		if(isSection(line) && getSection(line) != T.stringof) {
 			debug {
 				//pragma(msg, buildSectionParse!(T));
 				writefln("%*s%d %s", deaph, "", __LINE__, getSection(line));
