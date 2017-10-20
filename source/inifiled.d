@@ -235,8 +235,8 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 		import std.stdio : writefln;
 	}
 	debug {
-		writefln("%*s%d %s %x", deaph, "", __LINE__, fullyQualifiedName!(typeof(t)),
-			cast(void*)&input);
+		//writefln("%*s%d %s %x", deaph, "", __LINE__, fullyQualifiedName!(typeof(t)),
+		//	cast(void*)&input);
 	}
 	static auto empty_regex = ctRegex!(`^\s*$`);
 	string line;
@@ -248,24 +248,24 @@ string readINIFileImpl(T,IRange)(ref T t, ref IRange input, int deaph = 0)
 			continue;
 		}
 		debug {
-			writefln("%*s%d %s %s %b", deaph, "", __LINE__, line, fullyQualifiedName!T,
-				isSection(line));
+			//writefln("%*s%d %s %s %b", deaph, "", __LINE__, line, fullyQualifiedName!T,
+			//	isSection(line));
 		}
 
 		if(isSection(line) && getSection(line) != T.stringof) {
 			debug {
 				//pragma(msg, buildSectionParse!(T));
-				writefln("%*s%d %s", deaph, "", __LINE__, getSection(line));
-				writefln("%*s%d %x", deaph, "", __LINE__,
-					cast(void*)&input);
+				//writefln("%*s%d %s", deaph, "", __LINE__, getSection(line));
+				//writefln("%*s%d %x", deaph, "", __LINE__,
+				//	cast(void*)&input);
 			}
 
 			mixin(buildSectionParse!(T));
 		} else if(isKeyValue(line)) {
 			debug {
 				//pragma(msg, buildValueParse!(T));
-				writefln("%*s%d %s %s", deaph, "", __LINE__, getKey(line),
-					getValue(line));
+				//writefln("%*s%d %s %s", deaph, "", __LINE__, getKey(line),
+				//	getValue(line));
 			}
 
 			mixin(buildValueParse!(T));
